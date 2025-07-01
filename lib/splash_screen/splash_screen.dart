@@ -18,18 +18,35 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(Duration(seconds: 3)); // Splash screen delay
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => LoginScreen()), // Navigate to LoginScreen
+      MaterialPageRoute(builder: (context) => LoginScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
-      body: Center(
-        child: Text(
-          'My App Splash Screen',
-          style: TextStyle(color: Colors.white, fontSize: 24),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            stops: [0.26, 1.0],
+            colors: [
+              Color(0xFF121212), // dark top
+              Color(0xFF1F1F1F), // slightly lighter bottom
+            ],
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            'My App Splash Screen',
+            style: TextStyle(
+              color: Color(0xFFD7B65D), // gold accent
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
         ),
       ),
     );

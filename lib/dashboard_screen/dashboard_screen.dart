@@ -25,21 +25,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseScreen(
-      title: "Dashboard",
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text(
+          "Dashboard",
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       drawer: Sidebar(),
-      child: Column(
+      body: Column(
         children: [
           Expanded(
             child: FutureBuilder<DashboardData>(
               future: _dashboardData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF37)));
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(
+                    child: Text(
+                      'Error: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  );
                 }
 
                 final data = snapshot.data!;
@@ -47,94 +61,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Today's Earnings Section
-                      DashboardCard(
-                        title: 'Today',
-                        value: '\$${data.todayEarnings}',
-                        subtitle: data.todayDateSuffix,
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Wallet Balance Section
-                      DashboardCard(
-                        title: 'Wallet Balance',
-                        value: '\$${data.walletBalance}',
-                        actionText: 'Withdrawal',
-                        onActionPressed: () {
-                          // Handle withdrawal action
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Pending Task Button
-                      DashboardActionButton(
-                        text: 'View Pending Task (${data.pendingTasksCount})',
-                        onPressed: () {
-                          // Handle view pending task
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Ongoing Trip Section
-                      SectionHeader(
-                        title: 'Ongoing Trip',
-                        actionText: 'Navigation',
-                        onActionPressed: () {
-                          // Handle navigation action
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      if (data.ongoingTrip != null)
-                        LegendBox(
-                          items: [
-                            LegendItem(
-                              color: Colors.red, 
-                              label: 'Pickup: ${data.ongoingTrip!.pickupLocation}',
-                            ),
-                            LegendItem(
-                              color: Colors.green, 
-                              label: 'Destination: ${data.ongoingTrip!.destination}',
-                            ),
-                          ],
-                        )
-                      else
-                        const Text('No ongoing trip', textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      
-                      // Upcoming Trips Section
-                      SectionHeader(
-                        title: 'Upcoming Trip (${data.upcomingTrips.length})',
-                        actionText: 'Previous Trip',
-                        onActionPressed: () {
-                          // Handle previous trip action
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      if (data.upcomingTrips.isNotEmpty)
-                        ...data.upcomingTrips.map((trip) => Column(
-                          children: [
-                            TripCard(
-                              time: trip.time,
-                              destination: trip.destination,
-                              total: trip.total,
-                              onTap: () {
-                                // Handle trip card tap
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                        )).toList()
-                      else
-                        const Text('No upcoming trips', textAlign: TextAlign.center),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      DashboardSection(), // Custom dark-themed component
+                      SizedBox(height: 20),
+                      // More DashboardSection widgets can be added here
                     ],
                   ),
                 );
               },
             ),
           ),
-          LowerBar(),  // Keep the lower bar at the bottom
+          const LowerBar(),
         ],
       ),
     );

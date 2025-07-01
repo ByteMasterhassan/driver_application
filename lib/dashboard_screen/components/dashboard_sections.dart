@@ -1,216 +1,248 @@
 import 'package:flutter/material.dart';
 
-// Dashboard Card Component
-class DashboardCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final String? subtitle;
-  final String? actionText;
-  final VoidCallback? onActionPressed;
-
-  const DashboardCard({
-    Key? key,
-    required this.title,
-    required this.value,
-    this.subtitle,
-    this.actionText,
-    this.onActionPressed,
-  }) : super(key: key);
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D0D),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value,
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    if (subtitle != null)
-                      Text(
-                        subtitle!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                  ],
-                ),
-                if (actionText != null)
-                  TextButton(
-                    onPressed: onActionPressed,
-                    child: Text(actionText!),
-                  ),
-              ],
-            ),
+          children: const [
+            TripOperatorSection(),
+            SizedBox(height: 24),
+            DashboardSection(),
           ],
         ),
       ),
-    );
-  }
-}
-
-// Section Header Component
-class SectionHeader extends StatelessWidget {
-  final String title;
-  final String actionText;
-  final VoidCallback? onActionPressed;
-
-  const SectionHeader({
-    Key? key,
-    required this.title,
-    required this.actionText,
-    this.onActionPressed,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        TextButton(
-          onPressed: onActionPressed,
-          child: Text(actionText),
-        ),
-      ],
-    );
-  }
-}
-
-// Legend Box Component
-class LegendBox extends StatelessWidget {
-  final List<LegendItem> items;
-
-  const LegendBox({
-    Key? key,
-    this.items = const [],
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: items.map((item) => _buildLegendRow(item)).toList(),
-      ),
-    );
-  }
-
-  Widget _buildLegendRow(LegendItem item) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: item.color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(item.label),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black,
+        selectedItemColor: Color(0xFFFFD700),
+        unselectedItemColor: Colors.white,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
   }
 }
 
-class LegendItem {
-  final Color color;
-  final String label;
-
-  LegendItem({required this.color, required this.label});
-}
-
-// Trip Card Component
-class TripCard extends StatelessWidget {
-  final String time;
-  final String destination;
-  final String total;
-  final VoidCallback? onTap;
-
-  const TripCard({
-    Key? key,
-    required this.time,
-    required this.destination,
-    required this.total,
-    this.onTap,
-  }) : super(key: key);
+class TripOperatorSection extends StatelessWidget {
+  const TripOperatorSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$time $destination',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              Text(
-                'Total: $total',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        Text(
+          'Оператор Trip',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
         ),
-      ),
+        SizedBox(height: 4),
+        Row(
+          children: [
+            Text('Управляемый', style: TextStyle(fontSize: 14, color: Colors.grey)),
+            SizedBox(width: 8),
+            VerticalDivider(color: Colors.grey, thickness: 1),
+            SizedBox(width: 8),
+            Text('от 12', style: TextStyle(fontSize: 14, color: Colors.grey)),
+          ],
+        ),
+        SizedBox(height: 16),
+        Divider(thickness: 1, color: Colors.grey),
+        SizedBox(height: 8),
+        Text('Оператор Trip (3)', style: TextStyle(fontSize: 16, color: Colors.white)),
+      ],
     );
   }
 }
 
-// Dashboard Action Button Component
-class DashboardActionButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-
-  const DashboardActionButton({
-    Key? key,
-    required this.text,
-    required this.onPressed,
-  }) : super(key: key);
+class DashboardSection extends StatelessWidget {
+  const DashboardSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      child: Text(text),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+    return Column(
+      children: [
+        _todayCard(),
+        const SizedBox(height: 16),
+        _walletCard(context),
+        const SizedBox(height: 16),
+        _ongoingTripCard(context),
+        const SizedBox(height: 16),
+        _previousTripCard(),
+      ],
+    );
+  }
+
+  static Widget _todayCard() {
+    return _goldBorderCard(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Today', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 8),
+            const Text('\$ 244.00',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 20),
+            _buildCheckRow('At Rides'),
+            const SizedBox(height: 8),
+            _buildCheckRow('23/1'),
+          ],
+        ),
       ),
+    );
+  }
+
+  static Widget _walletCard(BuildContext context) {
+    return _goldBorderCard(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Wallet Balance', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            const SizedBox(height: 8),
+            const Text('\$ 1544.00',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 20),
+            _buildActionButton(context, 'View Pending Tasks', Icons.task, Color(0xFFFFD700)),
+            const SizedBox(height: 12),
+            _buildActionButton(context, 'Withdrawal', Icons.account_balance_wallet, Colors.green),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _ongoingTripCard(BuildContext context) {
+    return _goldBorderCard(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            const CircleAvatar(
+              backgroundImage: AssetImage('assets/megan_fox.jpg'),
+              radius: 24,
+            ),
+            const SizedBox(width: 16),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Megan Fox',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  SizedBox(height: 4),
+                  Text('⭐ 4.8', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Navigation clicked')),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFFFFD700),
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Navigation'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _previousTripCard() {
+    return _goldBorderCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Image.asset(
+            'assets/trip_map.png',
+            fit: BoxFit.cover,
+            height: 120,
+            width: double.infinity,
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: const [
+                CircleAvatar(
+                  backgroundImage: AssetImage('assets/jon_doe.jpg'),
+                  radius: 20,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text('Jon doe', style: TextStyle(fontSize: 16, color: Colors.white)),
+                ),
+                Text('Total : \$500',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildCheckRow(String text) {
+    return Row(
+      children: [
+        const Icon(Icons.check_circle, color: Color(0xFFFFD700), size: 20),
+        const SizedBox(width: 8),
+        Text(text, style: const TextStyle(fontSize: 16, color: Colors.white)),
+      ],
+    );
+  }
+
+  static Widget _buildActionButton(BuildContext context, String text, IconData icon, Color color) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: Icon(icon, size: 20),
+        label: Text(text, style: const TextStyle(fontSize: 16)),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.black,
+          backgroundColor: color,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$text clicked')));
+        },
+      ),
+    );
+  }
+
+  static Widget _goldBorderCard({required Widget child}) {
+    return Card(
+      color: const Color(0xFF1A1A1A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFFFD700), width: 1),
+      ),
+      child: child,
     );
   }
 }
