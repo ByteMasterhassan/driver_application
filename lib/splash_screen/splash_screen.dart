@@ -13,9 +13,8 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateToLogin();
   }
 
-  // Simulate a delay to show splash screen for a few seconds
   _navigateToLogin() async {
-    await Future.delayed(Duration(seconds: 3)); // Splash screen delay
+    await Future.delayed(const Duration(seconds: 3)); // splash delay
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -33,19 +32,51 @@ class _SplashScreenState extends State<SplashScreen> {
             stops: [0.26, 1.0],
             colors: [
               Color(0xFF121212), // dark top
-              Color(0xFF1F1F1F), // slightly lighter bottom
+              Color(0xFF1F1F1F), // lighter dark bottom
             ],
           ),
         ),
-        child: const Center(
-          child: Text(
-            'My App Splash Screen',
-            style: TextStyle(
-              color: Color(0xFFD7B65D), // gold accent
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.2,
-            ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              // App icon (driver/taxi)
+              Icon(
+                Icons.local_taxi_rounded,
+                size: 100,
+                color: Color(0xFFD7B65D),
+              ),
+              SizedBox(height: 20),
+
+              // App title
+              Text(
+                'Driver App',
+                style: TextStyle(
+                  color: Color(0xFFD7B65D),
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              SizedBox(height: 8),
+
+              // Tagline
+              Text(
+                'Powered for Drivers',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              SizedBox(height: 40),
+
+              // Progress indicator
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFD7B65D)),
+                strokeWidth: 2,
+              ),
+            ],
           ),
         ),
       ),

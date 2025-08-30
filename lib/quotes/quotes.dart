@@ -19,6 +19,12 @@ class QuotesScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         title: const Text(
           "Quotes",
           style: TextStyle(color: Colors.white),

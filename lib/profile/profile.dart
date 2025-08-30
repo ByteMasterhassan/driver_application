@@ -13,6 +13,12 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Profile', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -32,11 +38,12 @@ class ProfileScreen extends StatelessWidget {
             _buildProfileDetails(),
             const SizedBox(height: 32),
             _buildCompanyInfo(),
-            const SizedBox(height: 32),
-            LowerBar(),
+            const SizedBox(height: 80),
           ],
         ),
       ),
+        // 🔑 Fixed sticky bar
+        bottomNavigationBar: const LowerBar(),
     );
   }
 

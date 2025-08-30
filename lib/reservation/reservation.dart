@@ -18,6 +18,12 @@ class ReservationScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         elevation: 0,
         title: const Text(
           "Reservation",

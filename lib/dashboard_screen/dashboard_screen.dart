@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../dashboard_screen/components/dashboard_sections.dart';
+import '../dashboard_screen/dashboard_components/dashboard_sections.dart';
 import '../dashboard_screen/service/dashboard_service.dart';
-import 'components/sidebar.dart';
+import 'dashboard_components/sidebar.dart';
 import '../base_screen/base_screen.dart';
 import '../lower_bar/lower_bar.dart';
 

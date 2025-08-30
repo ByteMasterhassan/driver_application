@@ -31,6 +31,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: const Color(0xFF1C1C1C),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         title: const Text(
           'Calendar',
           style: TextStyle(color: Color(0xFFD7B65D)),
@@ -52,11 +58,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
             _buildAcceptOpportunitiesSection(),
             const SizedBox(height: 16),
             _buildDateSelectionSection(),
-            const SizedBox(height: 24),
-            const LowerBar(),
+            const SizedBox(height: 80),
           ],
         ),
       ),
+        // 🔑 Fixed sticky bar
+        bottomNavigationBar: const LowerBar(),
     );
   }
 

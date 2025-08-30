@@ -16,6 +16,12 @@ class HistoryScreen extends StatelessWidget {
         ),
         centerTitle: true,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView(
@@ -45,10 +51,11 @@ class HistoryScreen extends StatelessWidget {
             date: '3DDS',
             items: ['Menu'],
           ),
-          const SizedBox(height: 16),
-          const LowerBar(),
+          const SizedBox(height: 80),
         ],
       ),
+      // 🔑 Fixed sticky bar
+      bottomNavigationBar: const LowerBar(),
     );
   }
 

@@ -14,6 +14,12 @@ class WalletAccountScreen extends StatelessWidget {
         title: const Text('Wallet', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
@@ -34,11 +40,12 @@ class WalletAccountScreen extends StatelessWidget {
             _buildChartPlaceholder(),
             const SizedBox(height: 24),
             _buildWithdrawalHistory(),
-            const SizedBox(height: 24),
-            const LowerBar(),
+            const SizedBox(height: 80),
           ],
         ),
       ),
+        // 🔑 Fixed sticky bar
+        bottomNavigationBar: const LowerBar(),
     );
   }
 

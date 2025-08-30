@@ -3,6 +3,8 @@ import '../dashboard_screen/dashboard_screen.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../dashboard_screen/service/dashboard_service.dart';
+import '../registration_page/registration_screen.dart';  // ✅ import register page
+import '../forgot_password/forgot_password_screen.dart';  // ✅ import forgot password page
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -12,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -36,88 +39,189 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // driver logo/icon
+                  Icon(
+                    Icons.local_taxi_rounded,
+                    size: 80,
+                    color: const Color(0xFFD7B65D),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // title
                   Text(
-                    "Login",
+                    "Driver Login",
                     style: const TextStyle(
-                      fontSize: 28,
+                      fontSize: 30,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
                       color: Color(0xFFD7B65D), // gold accent
                     ),
                   ),
                   const SizedBox(height: 30),
+
+                  // card
                   Container(
                     padding: const EdgeInsets.all(20.0),
-                    width: 320,
+                    width: 340,
                     decoration: BoxDecoration(
                       color: const Color(0xFF2A2A2A),
-                      borderRadius: BorderRadius.circular(16.0),
+                      borderRadius: BorderRadius.circular(20.0),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.6),
-                          blurRadius: 10,
-                          offset: Offset(0, 6),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        // email field
                         TextField(
                           controller: _emailController,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFF1A1A1A),
                             labelText: 'Email',
+                            prefixIcon: const Icon(Icons.email, color: Color(0xFFD7B65D)),
                             labelStyle: const TextStyle(color: Colors.white70),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: const BorderSide(color: Color(0xFFD7B65D)),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: const BorderSide(color: Color(0xFFD7B65D), width: 2),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           keyboardType: TextInputType.emailAddress,
                         ),
                         const SizedBox(height: 20),
+
+                        // password field
                         TextField(
                           controller: _passwordController,
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFF1A1A1A),
                             labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock, color: Color(0xFFD7B65D)),
                             labelStyle: const TextStyle(color: Colors.white70),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderSide: const BorderSide(color: Color(0xFFD7B65D)),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: const BorderSide(color: Color(0xFFD7B65D), width: 2),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           obscureText: true,
                         ),
-                        const SizedBox(height: 30),
+
+                        // forgot password
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ForgotPasswordScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Forgot Password?",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // login button
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFD7B65D),
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             textStyle: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          onPressed: () {
-                            String email = _emailController.text;
-                            String password = _passwordController.text;
+                          onPressed: _isLoading
+                              ? null
+                              : () async {
+                                  setState(() => _isLoading = true);
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => DashboardScreen(
-                                  dashboardService: DashboardService(
-                                    baseUrl: dotenv.env['API_BASE_URL'] ?? '',
-                                    client: http.Client(),
+                                  // simulate login for now
+                                  await Future.delayed(const Duration(seconds: 1));
+
+                                  setState(() => _isLoading = false);
+
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DashboardScreen(
+                                        dashboardService: DashboardService(
+                                          baseUrl: dotenv.env['API_BASE_URL'] ?? '',
+                                          client: http.Client(),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
                                   ),
+                                )
+                              : const Text("Login"),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // don't have account -> register
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Don't have an account? ",
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => RegistrationScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "Register Now",
+                                style: TextStyle(
+                                  color: Color(0xFFD7B65D),
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            );
-                          },
-                          child: const Text("Login"),
+                            ),
+                          ],
                         ),
                       ],
                     ),

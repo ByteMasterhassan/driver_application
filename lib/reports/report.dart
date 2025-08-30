@@ -10,6 +10,12 @@ class ReportScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1C1C1C),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          },
+        ),
         title: const Text(
           'Report',
           style: TextStyle(color: Color(0xFFD7B65D)),
@@ -42,13 +48,14 @@ class ReportScreen extends StatelessWidget {
               _buildLocationCard('Bolyan', 'Queens'),
               const SizedBox(height: 24),
               _buildRidesIncomeSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 80),
               _buildChartSection(),
-              const LowerBar(),
             ],
           ),
         ),
       ),
+       // 🔑 Fixed sticky bar
+        bottomNavigationBar: const LowerBar(),
     );
   }
 
