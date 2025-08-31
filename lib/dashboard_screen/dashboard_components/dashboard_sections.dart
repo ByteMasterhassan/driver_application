@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart'; // 👈 add this
 import '../../lower_bar/lower_bar.dart';
-import 'package:flutter_web_plugins/flutter_web_plugins.dart';
-import 'dart:ui_web' as ui; // 👈 required for platformViewRegistry
-import 'dart:html'; 
+// import 'package:flutter_web_plugins/flutter_web_plugins.dart';
+// import 'dart:ui_web' as ui; // 👈 required for platformViewRegistry
+// import 'dart:html';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -38,7 +38,7 @@ class DashboardScreen extends StatelessWidget {
             SizedBox(height: 24),
             DashboardSection(),
             SizedBox(height: 24),
-            const LiveLocationSection(), // 👈 new section at bottom
+            // const LiveLocationSection(), // 👈 new section at bottom
             SizedBox(height: 80),
           ],
         ),
@@ -277,40 +277,40 @@ class DashboardSection extends StatelessWidget {
 }
 
 /// 🗺️ New Live Location Section
-class LiveLocationSection extends StatelessWidget {
-  const LiveLocationSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    // Register view type for iframe
-    ui.platformViewRegistry.registerViewFactory(
-      'map-view',
-      (int viewId) => IFrameElement()
-        ..src =
-            "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.019153484721!2d-122.4194!3d37.7749!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085809c2baa1a25%3A0x9f5b4e26f!2sSan%20Francisco!5e0!3m2!1sen!2sus!4v1688598765432"
-        ..style.border = 'none',
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Live Location",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFFD7B65D),
-          ),
-        ),
-        const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: SizedBox(
-            height: 200,
-            child: HtmlElementView(viewType: 'map-view'), // ✅ fixed
-          ),
-        ),
-      ],
-    );
-  }
-}
+// class LiveLocationSection extends StatelessWidget {
+//   const LiveLocationSection({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     // Register view type for iframe
+//     ui.platformViewRegistry.registerViewFactory(
+//       'map-view',
+//       (int viewId) => IFrameElement()
+//         ..src =
+//             "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3153.019153484721!2d-122.4194!3d37.7749!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085809c2baa1a25%3A0x9f5b4e26f!2sSan%20Francisco!5e0!3m2!1sen!2sus!4v1688598765432"
+//         ..style.border = 'none',
+//     );
+//
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         const Text(
+//           "Live Location",
+//           style: TextStyle(
+//             fontSize: 20,
+//             fontWeight: FontWeight.bold,
+//             color: Color(0xFFD7B65D),
+//           ),
+//         ),
+//         const SizedBox(height: 12),
+//         ClipRRect(
+//           borderRadius: BorderRadius.circular(14),
+//           child: SizedBox(
+//             height: 200,
+//             child: HtmlElementView(viewType: 'map-view'), // ✅ fixed
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
