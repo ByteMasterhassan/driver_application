@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../dashboard_screen/service/dashboard_service.dart';
 import '../registration_page/registration_screen.dart';  // ✅ import register page
 import '../forgot_password/forgot_password_screen.dart';  // ✅ import forgot password page
+import './login_service/login_service.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -160,17 +161,48 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             textStyle: const TextStyle(fontWeight: FontWeight.bold),
                           ),
+                          // onPressed: _isLoading
+                          //     ? null
+                          //     : () async {
+                          //         setState(() => _isLoading = true);
+
+                          //         // simulate login for now
+                          //         await Future.delayed(const Duration(seconds: 1));
+
+                          //         setState(() => _isLoading = false);
+
+                          //         Navigator.push(
+                          //           context,
+                          //           MaterialPageRoute(
+                          //             builder: (context) => DashboardScreen(
+                          //               dashboardService: DashboardService(
+                          //                 baseUrl: dotenv.env['API_BASE_URL'] ?? '',
+                          //                 client: http.Client(),
+                          //               ),
+                          //             ),
+                          //           ),
+                          //         );
+                          //       },
                           onPressed: _isLoading
-                              ? null
-                              : () async {
-                                  setState(() => _isLoading = true);
+                            ? null
+                            : () async {
+                                setState(() => _isLoading = true);
 
-                                  // simulate login for now
-                                  await Future.delayed(const Duration(seconds: 1));
+                                final loginService = LoginService(
+                                  baseUrl: dotenv.env['API_BASE_URL'] ?? "http://localhost:5000/api",
+                                  client: http.Client(),
+                                );
 
-                                  setState(() => _isLoading = false);
+                                final result = await loginService.loginDriver(
+                                  email: _emailController.text.trim(),
+                                  password: _passwordController.text.trim(),
+                                );
 
-                                  Navigator.push(
+                                setState(() => _isLoading = false);
+
+                                if (result["success"] == true) {
+                                  // ✅ Navigate to dashboard
+                                  Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => DashboardScreen(
@@ -181,7 +213,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
                                   );
-                                },
+                                } else {
+                                  // ❌ Show snackbar error
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(result["error"] ?? "Login failed"),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                           child: _isLoading
                               ? const SizedBox(
                                   height: 20,

@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+// import '../../registration_page/registration_service/registration_service.dart'
 
 class CarDetailsStep extends StatelessWidget {
   final List<File> carImages;
@@ -8,10 +10,15 @@ class CarDetailsStep extends StatelessWidget {
   final bool isLoading;
 
   // Controllers for car info fields
-  final TextEditingController makeController;
-  final TextEditingController modelController;
-  final TextEditingController yearController;
-  final TextEditingController rateController;
+  final TextEditingController brandController;     // vehicleBrand
+  final TextEditingController modelController;     // vehicleModel
+  final TextEditingController colorController;     // vehicleColor
+  final TextEditingController yearController;      // productionYear
+  final TextEditingController numberPlateController; // numberPlate
+  final TextEditingController luggageController;   // luggage
+  final TextEditingController passengersController; // passengers
+  final TextEditingController flatRateController;  // flat_rate
+  final TextEditingController pricePerKmController; // pricePerKm
 
   const CarDetailsStep({
     Key? key,
@@ -19,11 +26,46 @@ class CarDetailsStep extends StatelessWidget {
     required this.onImageAdded,
     required this.onNext,
     required this.isLoading,
-    required this.makeController,
+    required this.brandController,
     required this.modelController,
+    required this.colorController,
     required this.yearController,
-    required this.rateController,
+    required this.numberPlateController,
+    required this.luggageController,
+    required this.passengersController,
+    required this.flatRateController,
+    required this.pricePerKmController,
   }) : super(key: key);
+
+  Future<void> _pickImage(BuildContext context) async {
+    final picker = ImagePicker();
+    final pickedFile = await showDialog<XFile?>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text("Select Image"),
+        children: [
+          SimpleDialogOption(
+            onPressed: () async {
+              final picked = await picker.pickImage(source: ImageSource.camera);
+              Navigator.pop(ctx, picked);
+            },
+            child: const Text("Camera"),
+          ),
+          SimpleDialogOption(
+            onPressed: () async {
+              final picked = await picker.pickImage(source: ImageSource.gallery);
+              Navigator.pop(ctx, picked);
+            },
+            child: const Text("Gallery"),
+          ),
+        ],
+      ),
+    );
+
+    if (pickedFile != null) {
+      onImageAdded(File(pickedFile.path));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,21 +84,35 @@ class CarDetailsStep extends StatelessWidget {
                     color: Color(0xFFD7B65D))),
             const SizedBox(height: 16),
 
-            // ===== Car Make =====
-            _buildTextField("Car Make", makeController),
+            _buildTextField("Car Brand", brandController),
             const SizedBox(height: 10),
 
-            // ===== Car Model =====
             _buildTextField("Car Model", modelController),
             const SizedBox(height: 10),
 
-            // ===== Car Year =====
-            _buildTextField("Car Year", yearController,
+            _buildTextField("Car Color", colorController),
+            const SizedBox(height: 10),
+
+            _buildTextField("Production Year", yearController,
                 keyboardType: TextInputType.number),
             const SizedBox(height: 10),
 
-            // ===== Flat Rate =====
-            _buildTextField("Flat Rate (e.g. per day)", rateController,
+            _buildTextField("Number Plate", numberPlateController),
+            const SizedBox(height: 10),
+
+            _buildTextField("Luggage Capacity", luggageController,
+                keyboardType: TextInputType.number),
+            const SizedBox(height: 10),
+
+            _buildTextField("Passenger Capacity", passengersController,
+                keyboardType: TextInputType.number),
+            const SizedBox(height: 10),
+
+            _buildTextField("Flat Rate (per day)", flatRateController,
+                keyboardType: TextInputType.number),
+            const SizedBox(height: 10),
+
+            _buildTextField("Price per Km", pricePerKmController,
                 keyboardType: TextInputType.number),
             const SizedBox(height: 20),
 
@@ -79,9 +135,7 @@ class CarDetailsStep extends StatelessWidget {
                 itemBuilder: (context, index) {
                   if (index == carImages.length) {
                     return GestureDetector(
-                      onTap: () {
-                        // TODO: Add car image
-                      },
+                      onTap: () => _pickImage(context),
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.grey[850],
@@ -100,8 +154,8 @@ class CarDetailsStep extends StatelessWidget {
                 },
               ),
             ),
-            // ===== Sticky Register button =====
             const SizedBox(height: 20),
+
             SizedBox(
               width: double.infinity,
               child: _buildNextButton("Register"),

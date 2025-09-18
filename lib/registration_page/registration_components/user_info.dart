@@ -3,20 +3,24 @@ import '../../login_screen/login_screen.dart';
 
 class UserInfoStep extends StatelessWidget {
   final TextEditingController nameController;
+  final TextEditingController usernameController; // 🔹 new
   final TextEditingController emailController;
   final TextEditingController phoneController;
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
+  final TextEditingController dobController; // 🔹 new
   final VoidCallback onNext;
   final bool isLoading;
 
   const UserInfoStep({
     Key? key,
     required this.nameController,
+    required this.usernameController, // 🔹 new
     required this.emailController,
     required this.phoneController,
     required this.passwordController,
     required this.confirmPasswordController,
+    required this.dobController, // 🔹 new
     required this.onNext,
     required this.isLoading,
   }) : super(key: key);
@@ -33,7 +37,14 @@ class UserInfoStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildTextField(
-                  controller: nameController, label: "Full Name", icon: Icons.person),
+                  controller: nameController,
+                  label: "Full Name",
+                  icon: Icons.person),
+              const SizedBox(height: 16),
+              _buildTextField(
+                  controller: usernameController,
+                  label: "Username",
+                  icon: Icons.account_circle), // 🔹 added
               const SizedBox(height: 16),
               _buildTextField(
                   controller: emailController,
@@ -46,6 +57,12 @@ class UserInfoStep extends StatelessWidget {
                   label: "Phone Number",
                   icon: Icons.phone,
                   keyboardType: TextInputType.phone),
+              const SizedBox(height: 16),
+              _buildTextField(
+                  controller: dobController,
+                  label: "Date of Birth",
+                  icon: Icons.cake,
+                  keyboardType: TextInputType.datetime), // 🔹 added
               const SizedBox(height: 16),
               _buildTextField(
                   controller: passwordController,
@@ -71,7 +88,8 @@ class UserInfoStep extends StatelessWidget {
                   GestureDetector(
                     onTap: () => Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => LoginScreen()),
                     ),
                     child: const Text("Login",
                         style: TextStyle(
@@ -136,7 +154,8 @@ class UserInfoStep extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFFD7B65D), width: 2),
+          borderSide:
+              const BorderSide(color: Color(0xFFD7B65D), width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
       ),
