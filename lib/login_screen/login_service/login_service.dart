@@ -23,11 +23,17 @@ class LoginService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 && data["success"] == true) {
-        return {"success": true, "message": data["message"]};
+        return {
+          "success": true,
+          "message": data["message"],
+          "driver": data["driver"],
+          "token": data["token"],
+        };
       } else if (response.statusCode == 403) {
         return {
           "success": false,
-          "error": data["error"] ?? "Your account is pending approval by the admin."
+          "error": data["error"] ??
+              "Your account is pending approval by the admin."
         };
       } else if (response.statusCode == 401) {
         return {

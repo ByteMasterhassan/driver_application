@@ -14,6 +14,8 @@ import 'package:driver_frontend/history/history.dart';
 import 'package:driver_frontend/quotes/quotes.dart';
 import 'package:driver_frontend/dispatch/dispatch.dart';
 import 'package:driver_frontend/reservation/reservation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures binding is ready

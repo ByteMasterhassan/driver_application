@@ -15,7 +15,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  late Future<DashboardData> _dashboardData;
+  late Future<Map<String, dynamic>> _dashboardData;
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Column(
         children: [
           Expanded(
-            child: FutureBuilder<DashboardData>(
+            child: FutureBuilder<Map<String, dynamic>>(
               future: _dashboardData,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -48,26 +48,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 }
 
                 if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${snapshot.error}',
-                      style: const TextStyle(color: Colors.redAccent),
+                  return SingleChildScrollView( // Add scroll to error state too
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, color: Colors.redAccent, size: 50),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.redAccent),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _dashboardData = widget.dashboardService.fetchDashboardData();
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD4AF37),
+                                foregroundColor: Colors.black,
+                              ),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 }
 
-                final data = snapshot.data!;
-
-                return SingleChildScrollView(
+                // FIX: Use ListView instead of Column inside SingleChildScrollView
+                return ListView(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      DashboardSection(), // Custom dark-themed component
-                      SizedBox(height: 20),
-                      // More DashboardSection widgets can be added here
-                    ],
-                  ),
+                  children: [
+                    DashboardSection(dashboardData: snapshot.data!),
+                    const SizedBox(height: 20),
+                    // More DashboardSection widgets can be added here
+                  ],
                 );
               },
             ),

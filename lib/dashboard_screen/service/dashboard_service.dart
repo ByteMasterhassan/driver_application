@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardService {
   final String baseUrl;
@@ -10,110 +11,66 @@ class DashboardService {
     required this.client,
   });
 
-  Future<DashboardData> fetchDashboardData() async {
+  // Get driver ID from SharedPreferences
+  Future<int?> getDriverId() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt('driverId');
+    } catch (e) {
+      print('Error getting driver ID: $e');
+      return null;
+    }
+  }
+
+  // Fetch dashboard data
+  Future<Map<String, dynamic>> fetchDashboardData() async {
+    try {
+      final driverId = await getDriverId();
+      if (driverId == null) {
+        throw Exception('Driver ID not found in SharedPreferences');
+      }
+
+      // Explicitly use localhost:5000 as base URL
+      final String explicitBaseUrl = 'http://localhost:5000';
+      final url = Uri.parse('$explicitBaseUrl/api/driver/$driverId');
+      
+      print('Fetching dashboard data from: $url');
+
       final response = await client.get(
-        Uri.parse('$baseUrl/api/dashboard'),
+        url,
         headers: {'Content-Type': 'application/json'},
-      ).timeout(const Duration(seconds: 10));
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return DashboardData.fromJson(json.decode(response.body));
+        // Check if response is valid JSON
+        try {
+          final data = json.decode(response.body);
+          
+          if (data['success'] == true) {
+            return {
+              'totalEarnings': data['totalEarnings'] ?? 0,
+              'weeklyEarnings': data['weeklyEarnings'] ?? 0,
+              'dailyEarnings': data['dailyEarnings'] ?? 0,
+            };
+          } else {
+            throw Exception('API returned success: false - ${data['message'] ?? 'No message'}');
+          }
+        } catch (e) {
+          throw Exception('Invalid JSON response: $e. Response body: ${response.body}');
+        }
+      } else if (response.statusCode == 404) {
+        throw Exception('Endpoint not found (404). Check if the API URL is correct.');
+      } else if (response.statusCode >= 500) {
+        throw Exception('Server error (${response.statusCode}). Please try again later.');
       } else {
         throw Exception('Failed to load dashboard data: ${response.statusCode}');
       }
     } catch (e) {
-      return DashboardData.empty();
+      print('Error fetching dashboard data: $e');
+      rethrow;
     }
-  }
-}
-
-class DashboardData {
-  final String currentTime;
-  final String todayEarnings;
-  final String todayDateSuffix;
-  final String walletBalance;
-  final int pendingTasksCount;
-  final OngoingTrip? ongoingTrip;
-  final List<UpcomingTrip> upcomingTrips;
-
-  DashboardData({
-    required this.currentTime,
-    required this.todayEarnings,
-    required this.todayDateSuffix,
-    required this.walletBalance,
-    required this.pendingTasksCount,
-    required this.ongoingTrip,
-    required this.upcomingTrips,
-  });
-
-  factory DashboardData.fromJson(Map<String, dynamic> json) {
-    return DashboardData(
-      currentTime: json['current_time'] ?? 'N/A',
-      todayEarnings: json['today_earnings']?.toString() ?? 'N/A',
-      todayDateSuffix: json['today_date_suffix'] ?? 'N/A',
-      walletBalance: json['wallet_balance']?.toString() ?? 'N/A',
-      pendingTasksCount: json['pending_tasks_count'] ?? 0,
-      ongoingTrip: json['ongoing_trip'] != null 
-          ? OngoingTrip.fromJson(json['ongoing_trip']) 
-          : null,
-      upcomingTrips: json['upcoming_trips'] != null
-          ? (json['upcoming_trips'] as List)
-              .map((trip) => UpcomingTrip.fromJson(trip))
-              .toList()
-          : [],
-    );
-  }
-
-  factory DashboardData.empty() {
-    return DashboardData(
-      currentTime: 'N/A',
-      todayEarnings: 'N/A',
-      todayDateSuffix: 'N/A',
-      walletBalance: 'N/A',
-      pendingTasksCount: 0,
-      ongoingTrip: null,
-      upcomingTrips: [],
-    );
-  }
-}
-
-class OngoingTrip {
-  final String pickupLocation;
-  final String destination;
-  final String currentStatus;
-
-  OngoingTrip({
-    required this.pickupLocation,
-    required this.destination,
-    required this.currentStatus,
-  });
-
-  factory OngoingTrip.fromJson(Map<String, dynamic> json) {
-    return OngoingTrip(
-      pickupLocation: json['pickup_location'] ?? 'N/A',
-      destination: json['destination'] ?? 'N/A',
-      currentStatus: json['current_status'] ?? 'N/A',
-    );
-  }
-}
-
-class UpcomingTrip {
-  final String time;
-  final String destination;
-  final String total;
-
-  UpcomingTrip({
-    required this.time,
-    required this.destination,
-    required this.total,
-  });
-
-  factory UpcomingTrip.fromJson(Map<String, dynamic> json) {
-    return UpcomingTrip(
-      time: json['time'] ?? 'N/A',
-      destination: json['destination'] ?? 'N/A',
-      total: json['total']?.toString() ?? 'N/A',
-    );
   }
 }

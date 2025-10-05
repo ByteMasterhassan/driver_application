@@ -6,6 +6,7 @@ import '../dashboard_screen/service/dashboard_service.dart';
 import '../registration_page/registration_screen.dart';  // ✅ import register page
 import '../forgot_password/forgot_password_screen.dart';  // ✅ import forgot password page
 import './login_service/login_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -201,7 +202,29 @@ class _LoginScreenState extends State<LoginScreen> {
                                 setState(() => _isLoading = false);
 
                                 if (result["success"] == true) {
-                                  // ✅ Navigate to dashboard
+                                  final driver = result["driver"];
+
+                                  if (driver == null) {
+                                    debugPrint("❌ driver is null — check API response");
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text("Login response missing driver info")),
+                                    );
+                                    return;
+                                  }
+
+                                  final token = result["token"];
+                                  final name = driver["name"] ?? "Unknown";
+                                  final driverId = driver["id"] is int
+                                      ? driver["id"]
+                                      : int.tryParse(driver["id"].toString()) ?? 0;
+
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setInt('driverId', driverId);
+                                  await prefs.setString('token', token ?? '');
+                                  await prefs.setString('driverName', name);
+
+                                  debugPrint("✅ Driver info saved successfully");
+
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
@@ -213,7 +236,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
                                   );
-                                } else {
+                                }
+
+                                else {
                                   // ❌ Show snackbar error
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
