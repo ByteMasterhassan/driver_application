@@ -214,6 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   final token = result["token"];
                                   final name = driver["name"] ?? "Unknown";
+                                  final username = driver["username"] ?? "";
                                   final driverId = driver["id"] is int
                                       ? driver["id"]
                                       : int.tryParse(driver["id"].toString()) ?? 0;
@@ -222,6 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   await prefs.setInt('driverId', driverId);
                                   await prefs.setString('token', token ?? '');
                                   await prefs.setString('driverName', name);
+                                  await prefs.setString('driverUsername', username);
 
                                   debugPrint("✅ Driver info saved successfully");
 

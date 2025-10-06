@@ -1,212 +1,184 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../lower_bar/lower_bar.dart';
+import '../accounts/account_service/account_service.dart';
 
-class WalletAccountScreen extends StatelessWidget {
+class WalletAccountScreen extends StatefulWidget {
   const WalletAccountScreen({super.key});
 
   @override
+  State<WalletAccountScreen> createState() => _WalletAccountScreenState();
+}
+
+class _WalletAccountScreenState extends State<WalletAccountScreen> {
+  final AccountService _accountService = AccountService();
+
+  double totalEarnings = 0.0;
+  Map<String, int> weeklyChartData = {};
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAccountData();
+  }
+
+  Future<void> _fetchAccountData() async {
+    try {
+      final data = await _accountService.fetchDriverAccountData();
+
+      setState(() {
+        totalEarnings = data['totalEarnings'];
+        weeklyChartData = data['weeklyChartData'];
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Failed to load account data: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Wallet', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Wallet',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.amber),
           onPressed: () {
             Navigator.pushReplacementNamed(context, '/dashboard');
           },
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
+            icon: const Icon(Icons.notifications_none, color: Colors.amber),
             onPressed: () {},
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            _buildLastMonthSummary(),
-            const SizedBox(height: 24),
-            _buildWalletBalance(),
-            const SizedBox(height: 24),
-            _buildChartPlaceholder(),
-            const SizedBox(height: 24),
-            _buildWithdrawalHistory(),
-            const SizedBox(height: 80),
-          ],
-        ),
-      ),
-        // 🔑 Fixed sticky bar
-        bottomNavigationBar: const LowerBar(),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.amber))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 8),
+                  _buildTotalEarningsCard(
+                      currentMonth, '\$${totalEarnings.toStringAsFixed(2)}'),
+                  const SizedBox(height: 24),
+                  _buildChartSection(weeklyChartData),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+      bottomNavigationBar: const LowerBar(),
     );
   }
 
-  Widget _buildLastMonthSummary() {
+  Widget _buildTotalEarningsCard(String month, String amount) {
     return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2A2A2A), Color(0xFF1E1E1E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.amber.withOpacity(0.5), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      alignment: Alignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(month,
+              style: const TextStyle(color: Colors.grey, fontSize: 14)),
+          const SizedBox(height: 8),
+          Text(
+            amount,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text('Total Earnings',
+              style: TextStyle(color: Colors.amber, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChartSection(Map<String, int> chartData) {
+    return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber, width: 1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.amber.withOpacity(0.4)),
       ),
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Last Month',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 8),
-          const Text('\$ 12,491.22',
+          const Text('Earnings Overview',
               style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const SizedBox(height: 16),
+                  fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 220,
+            child: CustomPaint(
+              painter: _DynamicChartPainter(chartData),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildStatItem('244 Miles', Icons.directions_car),
-              _buildStatItem('255 min', Icons.timer),
+            children: const [
+              Text('Mon', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('Tue', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('Wed', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('Thu', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('Fri', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('Sat', style: TextStyle(color: Colors.white70, fontSize: 12)),
+              Text('Sun', style: TextStyle(color: Colors.white70, fontSize: 12)),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStatItem(String text, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.amber),
-        const SizedBox(width: 8),
-        Text(text, style: const TextStyle(fontSize: 16, color: Colors.white)),
-      ],
-    );
-  }
-
-  Widget _buildWalletBalance() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber, width: 1),
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Wallet Balance',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
-          SizedBox(height: 8),
-          Text('\$ 1544.00',
-              style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          SizedBox(height: 8),
-          Text('USD/Annual',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChartPlaceholder() {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2A2A2A),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber, width: 1),
-      ),
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children:[
-          Text('Earnings Overview',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          SizedBox(height: 16),
-          SizedBox(height: 200, child: CustomPaint(painter: _ChartPainter())),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('No', style: TextStyle(color: Colors.white70)),
-              Text('T1', style: TextStyle(color: Colors.white70)),
-              Text('Mt', style: TextStyle(color: Colors.white70)),
-              Text('Th', style: TextStyle(color: Colors.white70)),
-              Text('F7', style: TextStyle(color: Colors.white70)),
-              Text('S8', style: TextStyle(color: Colors.white70)),
-              Text('S6', style: TextStyle(color: Colors.white70)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWithdrawalHistory() {
-    final withdrawals = [
-      {'date': '14/04/2021 14:24 AM', 'amount': '\$110'},
-      {'date': '34/06/2021 22:30 AM', 'amount': '\$224'},
-      {'date': '11/04/2021 16:20 AM', 'amount': '\$300'},
-      {'date': '11/04/2021 16:20 AM', 'amount': '\$300'},
-      {'date': '11/04/2021 16:20 AM', 'amount': '\$300'},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Withdrawal History',
-            style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-        const SizedBox(height: 16),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: withdrawals.length,
-          separatorBuilder: (context, index) => Divider(color: Colors.grey[800]),
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(withdrawals[index]['date']!,
-                      style: const TextStyle(color: Colors.white70)),
-                  Text(withdrawals[index]['amount']!,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.amber)),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {},
-            child: const Text('View All', style: TextStyle(color: Colors.amber)),
-          ),
-        ),
-      ],
     );
   }
 }
 
-class _ChartPainter extends CustomPainter {
+class _DynamicChartPainter extends CustomPainter {
+  final Map<String, int> data;
+  _DynamicChartPainter(this.data);
+
   @override
   void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+
     final paint = Paint()
       ..color = Colors.amber
       ..strokeWidth = 2
@@ -216,19 +188,22 @@ class _ChartPainter extends CustomPainter {
       ..color = Colors.amber.withOpacity(0.2)
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    final points = [
-      Offset(0, size.height * 0.8),
-      Offset(size.width * 0.2, size.height * 0.6),
-      Offset(size.width * 0.4, size.height * 0.4),
-      Offset(size.width * 0.6, size.height * 0.7),
-      Offset(size.width * 0.8, size.height * 0.3),
-      Offset(size.width, size.height * 0.5),
-    ];
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final values = days.map((d) => (data[d] ?? 0).toDouble()).toList();
 
-    path.moveTo(points.first.dx, points.first.dy);
-    for (var point in points.skip(1)) {
-      path.lineTo(point.dx, point.dy);
+    final maxVal = (values.reduce((a, b) => a > b ? a : b)) + 1;
+    final stepX = size.width / (values.length - 1);
+
+    final path = Path();
+
+    for (int i = 0; i < values.length; i++) {
+      final double x = i * stepX;
+      final double y = size.height - (values[i] / maxVal * size.height);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
     }
 
     final filledPath = Path.from(path)
@@ -243,11 +218,13 @@ class _ChartPainter extends CustomPainter {
       ..color = Colors.amber
       ..style = PaintingStyle.fill;
 
-    for (var point in points) {
-      canvas.drawCircle(point, 4, pointPaint);
+    for (int i = 0; i < values.length; i++) {
+      final double x = i * stepX;
+      final double y = size.height - (values[i] / maxVal * size.height);
+      canvas.drawCircle(Offset(x, y), 4, pointPaint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

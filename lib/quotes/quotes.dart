@@ -1,16 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../quotes/quotes_service/quotes_service.dart';
 import '../lower_bar/lower_bar.dart';
 
+class QuotesScreen extends StatefulWidget {
+  const QuotesScreen({super.key});
 
-class QuotesScreen extends StatelessWidget {
-  final List<Map<String, String>> quotes = List.generate(3, (index) => {
-        'date': '23 SEP 2025',
-        'from': 'MANHATTAN',
-        'to': 'BROOKLYN',
-        'service': 'HOURLY SERVICE',
-        'car': 'LINCOLN SEDAN',
-        'price': '300\$',
+  @override
+  State<QuotesScreen> createState() => _QuotesScreenState();
+}
+
+class _QuotesScreenState extends State<QuotesScreen> {
+  final QuotesService _quotesService = QuotesService();
+  List<dynamic> _rides = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRides();
+  }
+
+  Future<void> _loadRides() async {
+    try {
+      final rides = await _quotesService.fetchRidesForDriver();
+      setState(() {
+        _rides = rides.where((r) => r['accept_ride'] == false).toList();
+        _isLoading = false;
       });
+    } catch (e) {
+      print('❌ Failed to load rides: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleRideDecision(int rideId, bool acceptRide) async {
+    await _quotesService.updateRideStatus(rideId, acceptRide);
+
+    // remove from list instantly after action
+    setState(() {
+      _rides.removeWhere((r) => r['id'] == rideId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,93 +71,124 @@ class QuotesScreen extends StatelessWidget {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: quotes.length,
-              itemBuilder: (context, index) {
-                final quote = quotes[index];
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFD700), width: 1),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.amber))
+          : _rides.isEmpty
+              ? const Center(
+                  child: Text(
+                    "No pending rides found",
+                    style: TextStyle(color: Colors.white70),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        quote['date']!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _rides.length,
+                  itemBuilder: (context, index) {
+                    final ride = _rides[index];
+                    final formattedDate = DateFormat('dd MMM yyyy').format(
+                        DateTime.parse(ride['createdAt']).toLocal());
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color: const Color(0xFFFFD700), width: 1),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text("From ${quote['from']!}",
-                              style: const TextStyle(color: Colors.white)),
-                          const Spacer(),
-                          const Icon(Icons.location_pin, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text("To ${quote['to']!}",
-                              style: const TextStyle(color: Colors.white)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.access_time, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text(quote['service']!,
-                              style: const TextStyle(color: Colors.white)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.directions_car, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text(quote['car']!,
-                              style: const TextStyle(color: Colors.white)),
-                          const Spacer(),
-                          Text(quote['price']!,
-                              style: const TextStyle(
+                          Text(
+                            formattedDate,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text("From ${ride['pickup_location']}",
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_pin,
+                                  color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text("To ${ride['dropoff_location']}",
+                                    style:
+                                        const TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time,
+                                  color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Text(
+                                  "${ride['pickup_date']} at ${ride['pickup_time']}",
+                                  style:
+                                      const TextStyle(color: Colors.white)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.directions_car,
+                                  color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Text(
+                                  ride['service_type'] ?? "Service Unavailable",
+                                  style:
+                                      const TextStyle(color: Colors.white)),
+                              const Spacer(),
+                              Text(
+                                "\$${ride['total_price']}",
+                                style: const TextStyle(
                                   color: Colors.amber,
                                   fontSize: 18,
-                                  fontWeight: FontWeight.bold)),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.check_circle,
+                                    color: Colors.green, size: 30),
+                                onPressed: () => _handleRideDecision(
+                                    ride['id'], true),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.cancel,
+                                    color: Colors.red, size: 30),
+                                onPressed: () => _handleRideDecision(
+                                    ride['id'], false),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () {},
-              child: const Text("Load More",
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ),LowerBar(),
-        ],
-      ),
+                    );
+                  },
+                ),
+      bottomNavigationBar: const LowerBar(),
     );
   }
 }
