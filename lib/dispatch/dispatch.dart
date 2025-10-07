@@ -1,15 +1,74 @@
 import 'package:flutter/material.dart';
 import '../lower_bar/lower_bar.dart';
+import '../dispatch/dispatch_service/dispatch_service.dart';
 
-class DispatchScreen extends StatelessWidget {
-  final List<Map<String, String>> quotes = List.generate(3, (index) => {
-        'date': '23 SEP 2025',
-        'from': 'MANHATTAN',
-        'to': 'BROOKLYN',
-        'service': 'HOURLY SERVICE',
-        'car': 'LINCOLN SEDAN',
-        'price': '300\$',
-      });
+class DispatchScreen extends StatefulWidget {
+  @override
+  State<DispatchScreen> createState() => _DispatchScreenState();
+}
+
+class _DispatchScreenState extends State<DispatchScreen> {
+  late Future<List<Map<String, dynamic>>> _futureRides;
+  List<Map<String, dynamic>> _rides = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRides();
+  }
+
+  void _loadRides() {
+    setState(() {
+      _futureRides = DispatchService.fetchDispatchedRides();
+    });
+  }
+
+  Future<void> _changeStatus(int rideId) async {
+    final flag = await _showStatusDialog();
+
+    if (flag != null) {
+      final success = await DispatchService.changeRideStatus(rideId, flag);
+      if (success) {
+        if (flag == 'completed') {
+          // Remove completed ride from list
+          setState(() {
+            _rides.removeWhere((r) => (r['ride_id'] ?? r['id']) == rideId);
+          });
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Status changed to $flag')),
+        );
+      }
+    }
+  }
+
+  Future<String?> _showStatusDialog() async {
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2A2A2A),
+          title: const Text('Change Ride Status', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildStatusButton('dispatched'),
+              _buildStatusButton('arrived'),
+              _buildStatusButton('pickup'),
+              _buildStatusButton('completed'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusButton(String flag) {
+    return ListTile(
+      title: Text(flag.toUpperCase(), style: const TextStyle(color: Colors.white)),
+      onTap: () => Navigator.pop(context, flag),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,14 +79,9 @@ class DispatchScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          },
+          onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
         ),
-        title: const Text(
-          "Dispatch",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text("Dispatch", style: TextStyle(color: Colors.white)),
         actions: [
           Row(
             children: const [
@@ -39,93 +93,80 @@ class DispatchScreen extends StatelessWidget {
           )
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: quotes.length,
-              itemBuilder: (context, index) {
-                final quote = quotes[index];
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFFFD700), width: 1),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        quote['date']!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _futureRides,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: Colors.amber));
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.white)));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No dispatched rides found', style: TextStyle(color: Colors.white)));
+          }
+
+          _rides = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            itemCount: _rides.length,
+            itemBuilder: (context, index) {
+              final ride = _rides[index];
+              final rideId = ride['ride_id'] ?? ride['id'];
+
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2A2A),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFFFD700), width: 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      ride['pickup_date'] ?? 'Unknown Date',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Colors.amber),
+                        const SizedBox(width: 8),
+                        Text("From ${ride['pickup_location'] ?? 'N/A'}", style: const TextStyle(color: Colors.white)),
+                        const Spacer(),
+                        const Icon(Icons.location_pin, color: Colors.amber),
+                        const SizedBox(width: 8),
+                        Text("To ${ride['dropoff_location'] ?? 'N/A'}", style: const TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(Icons.directions_car, color: Colors.amber),
+                        const SizedBox(width: 8),
+                        Text("${ride['service_type'] ?? 'Unknown'}", style: const TextStyle(color: Colors.white)),
+                        const Spacer(),
+                        Text("\$${ride['total_price'] ?? 0}", style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.location_on, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text("From ${quote['from']!}",
-                              style: const TextStyle(color: Colors.white)),
-                          const Spacer(),
-                          const Icon(Icons.location_pin, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text("To ${quote['to']!}",
-                              style: const TextStyle(color: Colors.white)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.access_time, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text(quote['service']!,
-                              style: const TextStyle(color: Colors.white)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Icon(Icons.directions_car, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text(quote['car']!,
-                              style: const TextStyle(color: Colors.white)),
-                          const Spacer(),
-                          Text(quote['price']!,
-                              style: const TextStyle(
-                                  color: Colors.amber,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.teal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () {},
-              child: const Text("Load More",
-                  style: TextStyle(color: Colors.white)),
-            ),
-          ),LowerBar(),
-        ],
+                      onPressed: () => _changeStatus(rideId),
+                      child: const Text('Change Status', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
+      bottomNavigationBar: LowerBar(),
     );
   }
 }
