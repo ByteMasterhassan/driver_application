@@ -36,28 +36,30 @@ class _ReservationScreenState extends State<ReservationScreen> {
     }
   }
 
-Future<void> _changeStatus(int rideId) async {
-  final selected = await showDialog<String>(
-    context: context,
-    builder: (context) {
-      return SimpleDialog(
-        title: const Text('Change Ride Status'),
-        children: [
-          _buildStatusOption(context, rideId, 'dispatched'),
-          _buildStatusOption(context, rideId, 'arrived'),
-          _buildStatusOption(context, rideId, 'pickup'),
-          _buildStatusOption(context, rideId, 'completed'),
-        ],
-      );
-    },
-  );
-
-  if (selected != null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Status changed to "$selected"')),
+  Future<void> _changeStatus(int rideId) async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return SimpleDialog(
+          title: const Text('Select Action'),
+          children: [
+            _buildStatusOption(context, rideId, 'dispatched'),
+            _buildStatusOption(context, rideId, 'arrived'),
+            _buildStatusOption(context, rideId, 'pickup'),
+            _buildStatusOption(context, rideId, 'completed'),
+            const Divider(),
+            _buildExposeOption(context, rideId), // 🆕 Expose Option
+          ],
+        );
+      },
     );
+
+    if (selected != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Action performed: "$selected"')),
+      );
+    }
   }
-}
 
 Widget _buildStatusOption(BuildContext context, int rideId, String flag) {
   return SimpleDialogOption(
@@ -90,6 +92,35 @@ Widget _buildStatusOption(BuildContext context, int rideId, String flag) {
     child: Text(flag.toUpperCase()),
   );
 }
+
+  Widget _buildExposeOption(BuildContext context, int rideId) {
+    return SimpleDialogOption(
+      onPressed: () async {
+        Navigator.pop(context, 'expose');
+        try {
+          final result = await ReservationService.exposeRideToNetwork(rideId);
+          if (result['success']) {
+            setState(() {
+              rides.removeWhere((ride) => ride['id'] == rideId || ride['ride_id'] == rideId);
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Ride exposed to network')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to expose ride')),
+            );
+          }
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error exposing ride: $e')),
+          );
+        }
+      },
+      child: const Text('Expose to Network', style: TextStyle(color: Colors.orange)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

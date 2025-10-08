@@ -28,6 +28,7 @@ class ReservationService {
         final filtered = rides.where((ride) =>
           ride['accept_ride'] == true &&
           ride['driver_id'] == driverId &&
+          (ride['is_exposed'] == false || ride['is_exposed'] == null) && // 🚫 skip exposed
           (ride['status'] == null || ride['status']['dispatched'] == false)
         ).toList();
 
@@ -58,6 +59,33 @@ class ReservationService {
       };
     } else {
       throw Exception('Failed to change status: ${response.statusCode}');
+    }
+  }
+
+    /// Expose a ride to the network
+  static Future<Map<String, dynamic>> exposeRideToNetwork(int rideId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final driverId = prefs.getInt('driverId');
+
+    if (driverId == null) {
+      throw Exception('Driver ID not found in SharedPreferences');
+    }
+
+    final url = Uri.parse('$baseUrl/network/expose');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'rideId': rideId, 'driverId': driverId}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return {
+        'success': data['success'] == true,
+        'rideId': rideId,
+      };
+    } else {
+      throw Exception('Failed to expose ride: ${response.statusCode}');
     }
   }
 }

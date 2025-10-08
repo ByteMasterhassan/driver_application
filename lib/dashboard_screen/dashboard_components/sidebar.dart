@@ -74,6 +74,12 @@ class Sidebar extends StatelessWidget {
                     context: context,
                   ),
                   _buildTile(
+                    icon: Icons.history,
+                    text: 'Network',
+                    route: '/network',
+                    context: context,
+                  ),
+                  _buildTile(
                     icon: Icons.assignment,
                     text: 'Quotes',
                     route: '/quotes',
@@ -89,6 +95,12 @@ class Sidebar extends StatelessWidget {
                     icon: Icons.local_shipping,
                     text: 'Dispatch',
                     route: '/dispatch',
+                    context: context,
+                  ),
+                  _buildTile(
+                    icon: Icons.history,
+                    text: 'History',
+                    route: '/history',
                     context: context,
                   ),
                   _buildTile(
