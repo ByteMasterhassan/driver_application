@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../lower_bar/lower_bar.dart';
+import '../dashboard_screen/dashboard_components/sidebar.dart';
 
 class NotificationScreen extends StatelessWidget {
   const NotificationScreen({super.key});
@@ -9,21 +10,18 @@ class NotificationScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1C1C1C),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          },
-        ),
-        title: const Text(
-          'Notifications',
-          style: TextStyle(color: Color(0xFFD7B65D)),
-        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Notifications', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFFD7B65D)),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
       ),
+      drawer: Sidebar(),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

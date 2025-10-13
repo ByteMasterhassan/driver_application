@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../lower_bar/lower_bar.dart';
 import '../profile/profile_service/profile_service.dart';
+import '../dashboard_screen/dashboard_components/sidebar.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -16,26 +17,18 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: const Color(0xFF1E1E1E),
         title: const Text('Profile', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          },
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // TODO: Add Edit Profile Logic
-            },
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-        ],
+        ),
       ),
+      drawer: Sidebar(),
       body: FutureBuilder<int?>(
         future: _getDriverId(),
         builder: (context, idSnapshot) {
@@ -116,7 +109,7 @@ class ProfileScreen extends StatelessWidget {
                       ? profile.profilePicture!
                       : 'http://10.0.2.2:5000${profile.profilePicture!}',
                 )
-              : const AssetImage('assets/default_profile.png')
+              : const AssetImage('')
                   as ImageProvider,
         ),
         const SizedBox(height: 16),

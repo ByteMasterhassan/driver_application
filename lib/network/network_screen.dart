@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../lower_bar/lower_bar.dart';
 import '../network/network_service/network_service.dart';
+import '../dashboard_screen/dashboard_components/sidebar.dart';
 
 class NetworkScreen extends StatefulWidget {
   const NetworkScreen({super.key});
@@ -63,26 +64,104 @@ class _NetworkScreenState extends State<NetworkScreen> {
     }
   }
 
+  Future<void> _showAcceptConfirmation(int rideId) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    color: Colors.amber, size: 50),
+                const SizedBox(height: 12),
+                const Text(
+                  "Accept Ride?",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  "Are you sure you want to accept this ride from the network?",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(foregroundColor: Colors.white),
+                      child: const Text("Cancel"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _acceptRide(rideId);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        "Yes, Accept",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Network', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
         elevation: 0,
-        title: const Text(
-          "Network Rides",
-          style: TextStyle(color: Colors.white),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
+      drawer: Sidebar(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.amber))
           : errorMessage != null
-              ? Center(child: Text(errorMessage!, style: const TextStyle(color: Colors.red)))
+              ? Center(
+                  child: Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                )
               : rides.isEmpty
                   ? const Center(
                       child: Text(
@@ -121,8 +200,12 @@ class _NetworkScreenState extends State<NetworkScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            ride['pickup_date'] ?? '',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            "Pickup Date: ${ride['pickup_date'] ?? ''}",
+            style: const TextStyle(
+              color: Colors.amber,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -174,6 +257,8 @@ class _NetworkScreenState extends State<NetworkScreen> {
             ],
           ),
           const SizedBox(height: 10),
+
+          // Show info if self-exposed
           if (isSelfExposed)
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
@@ -189,15 +274,27 @@ class _NetworkScreenState extends State<NetworkScreen> {
                 ),
               ),
             ),
+
+          const Divider(color: Colors.white24),
+
+          // Accept button (always active, even for self-exposed)
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: () => _acceptRide(ride['id']),
+              onPressed: () async {
+                await _showAcceptConfirmation(ride['id']);
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isSelfExposed ? Colors.grey : Colors.teal,
+                backgroundColor: Colors.teal,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              child: const Text("Accept Ride", style: TextStyle(color: Colors.white)),
+              child: const Text(
+                "Accept Ride",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
           ),
         ],

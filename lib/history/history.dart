@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../history/history_service/history_service.dart';
 import '../lower_bar/lower_bar.dart';
+import '../dashboard_screen/dashboard_components/sidebar.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -18,26 +20,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _futureRides = HistoryService.fetchCompletedRides();
   }
 
+  String _formatDate(String rawDate) {
+    try {
+      final date = DateTime.parse(rawDate);
+      return DateFormat('EEE, MMM d • hh:mm a').format(date); // e.g. Tue, Oct 1 • 03:45 PM
+    } catch (_) {
+      return 'Unknown Date';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('History', style: TextStyle(color: Colors.white)),
+        title: const Text('Ride History', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
+      drawer: Sidebar(),
       body: FutureBuilder(
         future: _futureRides,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Color(0xFFD4AF37)));
           } else if (snapshot.hasError) {
             return Center(
               child: Text(
@@ -49,7 +62,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             return const Center(
               child: Text(
                 'No completed rides found',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
             );
           }
@@ -60,17 +73,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             itemCount: rides.length,
             itemBuilder: (context, index) {
               final ride = rides[index];
-              final date = ride['createdAt'] ?? 'N/A';
+              final date = _formatDate(ride['createdAt'] ?? '');
               final pickup = ride['pickup_location'] ?? 'Unknown';
               final drop = ride['dropoff_location'] ?? 'Unknown';
+              final fare = ride['totalPrice']?.toString() ?? 'N/A';
 
               return _buildHistoryItem(
-                date: date.toString(),
-                items: [
-                  'Pickup: $pickup',
-                  'Drop: $drop',
-                  'Status: Completed ✅',
-                ],
+                date: date,
+                pickup: pickup,
+                drop: drop,
+                fare: fare,
               );
             },
           );
@@ -82,36 +94,101 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildHistoryItem({
     required String date,
-    required List<String> items,
+    required String pickup,
+    required String drop,
+    required String fare,
   }) {
     return Card(
       color: const Color(0xFF1E1E1E),
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              date,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFD4AF37),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ...items.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: Text(
-                  item,
-                  style: const TextStyle(fontSize: 14, color: Colors.white),
+            // Top Row: Date + Status
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  date,
+                  style: const TextStyle(
+                    color: Color(0xFFD4AF37),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green, width: 0.8),
+                  ),
+                  child: const Text(
+                    "Completed",
+                    style: TextStyle(
+                      color: Colors.greenAccent,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 10),
+
+            // Pickup & Drop section
+            Row(
+              children: [
+                const Icon(Icons.location_pin, color: Colors.orangeAccent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    pickup,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.flag, color: Colors.blueAccent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    drop,
+                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+
+            // const Divider(height: 20, color: Colors.white10),
+
+            // Fare row
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     const Text(
+            //       "Total Fare:",
+            //       style: TextStyle(color: Colors.white60, fontSize: 13),
+            //     ),
+            //     Text(
+            //       "PKR $fare",
+            //       style: const TextStyle(
+            //         color: Color(0xFFD4AF37),
+            //         fontWeight: FontWeight.bold,
+            //         fontSize: 14,
+            //       ),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),

@@ -40,7 +40,7 @@ class Sidebar extends StatelessWidget {
                 children: const [
                   CircleAvatar(
                     radius: 40,
-                    backgroundImage: AssetImage("assets/images/profile.png"), 
+                    backgroundImage: AssetImage(""), 
                     // <-- replace with actual profile image
                   ),
                   SizedBox(height: 10),
@@ -68,15 +68,9 @@ class Sidebar extends StatelessWidget {
                     context: context,
                   ),
                   _buildTile(
-                    icon: Icons.account_circle,
-                    text: 'Accounts',
-                    route: '/account',
-                    context: context,
-                  ),
-                  _buildTile(
-                    icon: Icons.history,
-                    text: 'Network',
-                    route: '/network',
+                    icon: Icons.person,
+                    text: 'Profile',
+                    route: '/profile',
                     context: context,
                   ),
                   _buildTile(
@@ -98,29 +92,41 @@ class Sidebar extends StatelessWidget {
                     context: context,
                   ),
                   _buildTile(
+                    icon: Icons.account_circle,
+                    text: 'Accounts',
+                    route: '/account',
+                    context: context,
+                  ),
+                  _buildTile(
+                    icon: Icons.wifi_tethering,
+                    text: 'Network',
+                    route: '/network',
+                    context: context,
+                  ),
+                  _buildTile(
                     icon: Icons.history,
                     text: 'History',
                     route: '/history',
                     context: context,
                   ),
-                  _buildTile(
-                    icon: Icons.payment,
-                    text: 'Calendar',
-                    route: '/calender',
-                    context: context,
-                  ),
+                  // _buildTile(
+                  //   icon: Icons.payment,
+                  //   text: 'Calendar',
+                  //   route: '/calender',
+                  //   context: context,
+                  // ),
                   _buildTile(
                     icon: Icons.notifications,
                     text: 'Notifications',
                     route: '/notification',
                     context: context,
                   ),
-                  _buildTile(
-                    icon: Icons.insert_chart,
-                    text: 'Reports',
-                    route: '/report',
-                    context: context,
-                  ),
+                  // _buildTile(
+                  //   icon: Icons.insert_chart,
+                  //   text: 'Reports',
+                  //   route: '/report',
+                  //   context: context,
+                  // ),
                 ],
               ),
             ),

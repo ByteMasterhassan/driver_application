@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../lower_bar/lower_bar.dart';
 import '../accounts/account_service/account_service.dart';
+import '../dashboard_screen/dashboard_components/sidebar.dart';
 
 class WalletAccountScreen extends StatefulWidget {
   const WalletAccountScreen({super.key});
@@ -46,26 +47,18 @@ class _WalletAccountScreenState extends State<WalletAccountScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: const Text(
-          'Wallet',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Wallet', style: TextStyle(color: Colors.white)),
         centerTitle: true,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.amber),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.amber),
-            onPressed: () {},
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
-        ],
+        ),
       ),
+      drawer: Sidebar(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.amber))
           : SingleChildScrollView(

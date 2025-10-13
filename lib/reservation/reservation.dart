@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../reservation/reservation_service/reservation_service.dart';
 import '../lower_bar/lower_bar.dart';
+import '../dashboard_screen/dashboard_components/sidebar.dart';
 
 class ReservationScreen extends StatefulWidget {
   const ReservationScreen({super.key});
@@ -39,19 +39,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
   Future<void> _changeStatus(int rideId) async {
     final selected = await showDialog<String>(
       context: context,
-      builder: (context) {
-        return SimpleDialog(
-          title: const Text('Select Action'),
-          children: [
-            _buildStatusOption(context, rideId, 'dispatched'),
-            _buildStatusOption(context, rideId, 'arrived'),
-            _buildStatusOption(context, rideId, 'pickup'),
-            _buildStatusOption(context, rideId, 'completed'),
-            const Divider(),
-            _buildExposeOption(context, rideId), // 🆕 Expose Option
-          ],
-        );
-      },
+      builder: (context) => _buildActionDialog(context, rideId),
     );
 
     if (selected != null) {
@@ -61,65 +49,148 @@ class _ReservationScreenState extends State<ReservationScreen> {
     }
   }
 
-Widget _buildStatusOption(BuildContext context, int rideId, String flag) {
-  return SimpleDialogOption(
-    onPressed: () async {
-      Navigator.pop(context, flag);
-      try {
-        final result = await ReservationService.changeRideStatus(rideId, flag);
-        if (result['success']) {
-          setState(() {
-            // ✅ Remove ride from list if dispatched
-            if (flag == 'dispatched') {
-              rides.removeWhere((ride) => ride['id'] == rideId || ride['ride_id'] == rideId);
-            }
-          });
+  Widget _buildActionDialog(BuildContext context, int rideId) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF2A2A2A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text('Select Action',
+          style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildStatusOption(context, rideId, 'dispatched', Icons.local_shipping),
+          _buildStatusOption(context, rideId, 'arrived', Icons.location_on),
+          _buildStatusOption(context, rideId, 'pickup', Icons.directions_car),
+          _buildStatusOption(context, rideId, 'completed', Icons.done_all),
+          const Divider(color: Colors.white24, height: 25),
+          _buildExposeOption(context, rideId),
+        ],
+      ),
+    );
+  }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Status updated to "$flag"')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to update status')),
-          );
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+  Widget _buildStatusOption(
+      BuildContext context, int rideId, String flag, IconData icon) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.amber),
+      title: Text(flag.toUpperCase(),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+      onTap: () async {
+        final confirmed = await _showConfirmDialog(
+          context,
+          title: "Change Status",
+          message: "Are you sure you want to mark this ride as '$flag'?",
+          confirmColor: Colors.teal,
         );
-      }
-    },
-    child: Text(flag.toUpperCase()),
-  );
-}
-
-  Widget _buildExposeOption(BuildContext context, int rideId) {
-    return SimpleDialogOption(
-      onPressed: () async {
-        Navigator.pop(context, 'expose');
-        try {
-          final result = await ReservationService.exposeRideToNetwork(rideId);
-          if (result['success']) {
-            setState(() {
-              rides.removeWhere((ride) => ride['id'] == rideId || ride['ride_id'] == rideId);
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Ride exposed to network')),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to expose ride')),
-            );
-          }
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error exposing ride: $e')),
-          );
+        if (confirmed == true) {
+          Navigator.pop(context, flag);
+          await _updateRideStatus(rideId, flag);
         }
       },
-      child: const Text('Expose to Network', style: TextStyle(color: Colors.orange)),
     );
+  }
+
+  Widget _buildExposeOption(BuildContext context, int rideId) {
+    return ListTile(
+      leading: const Icon(Icons.public, color: Colors.orange),
+      title: const Text("Expose to Network",
+          style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w600)),
+      onTap: () async {
+        final confirmed = await _showConfirmDialog(
+          context,
+          title: "Expose Ride",
+          message:
+              "Are you sure you want to expose this ride to the network?",
+          confirmColor: Colors.orange,
+        );
+        if (confirmed == true) {
+          Navigator.pop(context, 'expose');
+          await _exposeRide(rideId);
+        }
+      },
+    );
+  }
+
+  Future<bool?> _showConfirmDialog(BuildContext context,
+      {required String title,
+      required String message,
+      required Color confirmColor}) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF2A2A2A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(title,
+            style: const TextStyle(
+                color: Colors.amber, fontWeight: FontWeight.bold)),
+        content: Text(message,
+            style: const TextStyle(color: Colors.white70, height: 1.4)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: confirmColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Confirm",
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateRideStatus(int rideId, String flag) async {
+    try {
+      final result = await ReservationService.changeRideStatus(rideId, flag);
+      if (result['success']) {
+        setState(() {
+          if (flag == 'dispatched') {
+            rides.removeWhere((ride) =>
+                ride['id'] == rideId || ride['ride_id'] == rideId);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Status updated to "$flag"')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update status')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  Future<void> _exposeRide(int rideId) async {
+    try {
+      final result = await ReservationService.exposeRideToNetwork(rideId);
+      if (result['success']) {
+        setState(() {
+          rides.removeWhere(
+              (ride) => ride['id'] == rideId || ride['ride_id'] == rideId);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ride exposed to network')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to expose ride')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error exposing ride: $e')),
+      );
+    }
   }
 
   @override
@@ -127,25 +198,33 @@ Widget _buildStatusOption(BuildContext context, int rideId, String flag) {
     return Scaffold(
       backgroundColor: const Color(0xFF1A1A1A),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
-        ),
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Reservation', style: TextStyle(color: Colors.white)),
+        centerTitle: true,
         elevation: 0,
-        title: const Text(
-          "Reservation",
-          style: TextStyle(color: Colors.white),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
       ),
+      drawer: Sidebar(),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.amber))
           : errorMessage != null
-              ? Center(child: Text(errorMessage!, style: const TextStyle(color: Colors.red)))
+              ? Center(
+                  child: Text(errorMessage!,
+                      style: const TextStyle(color: Colors.red)),
+                )
               : rides.isEmpty
-                  ? const Center(child: Text("No accepted rides found", style: TextStyle(color: Colors.white)))
+                  ? const Center(
+                      child: Text("No accepted rides found",
+                          style: TextStyle(color: Colors.white70)),
+                    )
                   : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       itemCount: rides.length,
                       itemBuilder: (context, index) {
                         final ride = rides[index];
@@ -164,73 +243,105 @@ Widget _buildStatusOption(BuildContext context, int rideId, String flag) {
         color: const Color(0xFF2A2A2A),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFFFD700), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            offset: const Offset(0, 4),
+            blurRadius: 6,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Date
           Text(
-            ride['pickup_date'] ?? '',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            "Pickup Date: ${ride['pickup_date'] ?? ''}",
+            style: const TextStyle(
+              color: Colors.amber,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 12),
+
+          // Pickup Location
           Row(
             children: [
-              const Icon(Icons.location_on, color: Colors.amber),
+              const Icon(Icons.my_location, color: Colors.amber, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  ride['pickup_location'] ?? 'N/A',
+                  "From: ${ride['pickup_location'] ?? 'N/A'}",
                   style: const TextStyle(color: Colors.white),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+
+          // Dropoff Location
           Row(
             children: [
-              const Icon(Icons.location_pin, color: Colors.amber),
+              const Icon(Icons.flag, color: Colors.amber, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  ride['dropoff_location'] ?? 'N/A',
+                  "To: ${ride['dropoff_location'] ?? 'N/A'}",
                   style: const TextStyle(color: Colors.white),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+
+          // Pickup Time
           Row(
             children: [
-              const Icon(Icons.access_time, color: Colors.amber),
+              const Icon(Icons.access_time, color: Colors.amber, size: 20),
               const SizedBox(width: 8),
-              Text(ride['pickup_time'] ?? '', style: const TextStyle(color: Colors.white)),
+              Text("Time: ${ride['pickup_time'] ?? ''}",
+                  style: const TextStyle(color: Colors.white)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+
+          // Service & Price
           Row(
             children: [
-              const Icon(Icons.directions_car, color: Colors.amber),
+              const Icon(Icons.directions_car, color: Colors.amber, size: 20),
               const SizedBox(width: 8),
-              Text(ride['service_type'] ?? '', style: const TextStyle(color: Colors.white)),
+              Text(ride['service_type'] ?? 'Unknown',
+                  style: const TextStyle(color: Colors.white)),
               const Spacer(),
               Text(
                 "\$${ride['total_price'] ?? 0}",
-                style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                    color: Colors.amber,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          const Divider(color: Colors.white24),
+
+          // Action Button
           Align(
             alignment: Alignment.centerRight,
-            child: ElevatedButton(
+            child: ElevatedButton.icon(
               onPressed: () => _changeStatus(ride['ride_id'] ?? ride['id']),
+              icon: const Icon(Icons.edit, color: Colors.white),
+              label: const Text("Change Status",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text("Change Status", style: TextStyle(color: Colors.white)),
             ),
           ),
         ],
